@@ -1,0 +1,46 @@
+syntax="proto3";
+
+package proto;
+
+message RequestBase{
+    string msgid = 1;
+};
+
+message Response{
+    string msgid = 1;
+    int64 errorCode = 3;
+    string error = 4;//error info;
+};
+
+message KeyValue{
+    bytes key = 1;
+    bytes value = 2;
+};
+
+message RequestKVSGetList{
+    RequestBase req = 1;
+    repeated bytes keys = 2;
+};
+
+message ResponseKVSGetList{
+    Response resp = 1;
+    repeated KeyValue kvs= 2;
+};
+
+message RequestKVSSetList{
+    RequestBase req = 1;
+    repeated KeyValue kvs= 2;
+};
+
+message ResponseKVSSetList{
+    Response resp = 1;
+};
+
+message RequestKVSDeleteList{
+    RequestBase req = 1;
+    repeated bytes keys = 2;
+};
+
+message ResponseKVSDeleteList{
+    Response resp = 1;
+};
