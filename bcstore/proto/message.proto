@@ -19,12 +19,14 @@ message KeyValue{
 
 message ReqSet{
     ReqBase  base = 1;
-    KeyValue kv = 2;
+    string dbName = 2;
+    KeyValue kv = 3;
 };
 
 message ReqGet{
     ReqBase  base = 1;
-    bytes key = 2;
+    string dbName = 2;
+    bytes key = 3;
 }
 
 message RespGet{
@@ -32,11 +34,18 @@ message RespGet{
     KeyValue kv = 2;
 };
 
+message ReqDelete{
+    ReqBase  base = 1;
+    string dbName = 2;
+    bytes key = 3;
+}
+
 message ReqGetByPrefix{
     ReqBase base = 1;
-    bytes prefix = 2;
-    bytes lastKey = 3;//key of last time get;
-    int64 limit = 4;
+    string dbName = 2;
+    bytes prefix = 3;
+    bytes lastKey = 4;//key of last time get;
+    int64 limit = 5;
 }
 
 message RespGetByPrefix{
@@ -46,13 +55,15 @@ message RespGetByPrefix{
 
 message ReqBatch{
     ReqBase base = 1;
-    repeated KeyValue sets = 2;
-    repeated bytes    dels = 3;
+    string dbName = 2;
+    repeated KeyValue sets = 3;
+    repeated bytes    dels = 4;
 };
 
 message ReqIsExist{
     ReqBase base = 1;
-    bytes key = 2;
+    string dbName = 2;
+    bytes key = 3;
 }
 
 message RespIsExist{
@@ -68,7 +79,8 @@ enum PropertyType{
 
 message ReqGetProperty{
     ReqBase  base = 1;
-    PropertyType property = 2;
+    string dbName = 2;
+    PropertyType property = 3;
 }
 
 message RespGetProperty{

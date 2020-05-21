@@ -15,8 +15,6 @@
 package db
 
 import (
-	"path"
-
 	kvclient "github.com/dappledger/AnnChain/bcstore/client"
 	"github.com/dappledger/AnnChain/bcstore/types"
 	gcmn "github.com/dappledger/AnnChain/gemmill/modules/go-common"
@@ -70,16 +68,15 @@ func registerDBCreator(backend string, creator dbCreator, force bool) {
 }
 
 func NewDB(name string, backend string, dir string) DB {
-	dbpath := path.Join(dir, name+".db")
 	var ds kvclient.DBStore
 	var err error
 	switch backend {
 	case LevelDBBackendStr, GoLevelDBBackendStr:
-		ds, err = kvclient.NewLocalClient(dbpath, types.ST_GOLevelDB)
+		ds, err = kvclient.NewClient(name,dir, types.ST_GOLevelDB)
 	case CLevelDBBackendStr:
-		ds, err = kvclient.NewLocalClient(dbpath, types.ST_CLevelDB)
+		ds, err = kvclient.NewClient(name,dir, types.ST_CLevelDB)
 	case MemDBBackendStr:
-		ds, err = kvclient.NewLocalClient(dbpath, types.ST_MemDB)
+		ds, err = kvclient.NewClient(name,dir, types.ST_MemDB)
 	default:
 		err = types.SErrNotSupport
 	}

@@ -89,7 +89,7 @@ func NewLDBDatabase(file string, cache int, handles int) (*LDBDatabase, error) {
 	if err != nil {
 		return nil, err
 	}
-	cli, err := kvclient.NewLocalClient(fullpath, types.ST_GOLevelDB)
+	cli, err := kvclient.NewClient(filepath.Base(fullpath),filepath.Dir(fullpath), types.ST_GOLevelDB)
 	return &LDBDatabase{
 		fn:  file,
 		db:  cli,

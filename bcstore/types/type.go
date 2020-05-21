@@ -30,3 +30,7 @@ var (
 var (
 
 )
+
+const (
+	DefPageLimit = 20
+)

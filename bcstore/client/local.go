@@ -2,6 +2,9 @@ package client
 
 import (
 	"context"
+	`path`
+
+	`github.com/spf13/viper`
 
 	"github.com/dappledger/AnnChain/bcstore/proto"
 	"github.com/dappledger/AnnChain/bcstore/server"
@@ -22,7 +25,16 @@ type LocalClient struct {
 	srv server.Server
 }
 
-func NewLocalClient(fullpath string, dbtype types.StoreType) (ds DBStore, err error) {
+func NewClient(name ,dir string, dbtype types.StoreType)(DBStore,error){
+	if !viper.GetBool("use_rpc"){
+		return newLocalClient(name,dir,dbtype)
+	}
+	addr:=viper.GetString("rpc_addr")
+	return newRpcCLient(name,[]string{addr})
+}
+
+func newLocalClient(name ,dir string, dbtype types.StoreType) (ds DBStore, err error) {
+	fullpath := path.Join(dir,name)
 	var lc LocalClient
 	lc.srv, err = server.NewServer(fullpath, dbtype)
 	if err != nil {
@@ -31,9 +43,6 @@ func NewLocalClient(fullpath string, dbtype types.StoreType) (ds DBStore, err er
 	return &lc, nil
 }
 
-func (kc *LocalClient) ConnectServer(addrs []string) error {
-	return nil
-}
 func (kc *LocalClient) Set(kv types.KeyValue) error {
 	return kc.srv.Set(context.TODO(), kv)
 }

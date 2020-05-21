@@ -4,6 +4,7 @@ import "message.proto";
 
 service BCStore{
     rpc Set(ReqSet)returns(RespBase){}
+    rpc Delete(ReqDelete)returns(RespBase){}
     rpc Get(ReqGet)returns(RespGet){}
     rpc GetByPrefix(ReqGetByPrefix)returns(RespGetByPrefix){}
     rpc Batch(ReqBatch)returns(RespBase){}
