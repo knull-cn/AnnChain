@@ -1,0 +1,12 @@
+syntax="proto3";
+package proto;
+import "message.proto";
+
+service BCStore{
+    rpc Set(ReqSet)returns(RespBase){}
+    rpc Get(ReqGet)returns(RespGet){}
+    rpc GetByPrefix(ReqGetByPrefix)returns(RespGetByPrefix){}
+    rpc Batch(ReqBatch)returns(RespBase){}
+    rpc IsExist(ReqIsExist)returns(RespIsExist){}
+    rpc GetProperty(ReqGetProperty)returns(RespGetProperty){}
+};

@@ -19,21 +19,19 @@
 package ethdb
 
 import (
-	"bytes"
+	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	`github.com/dappledger/AnnChain/bcstore/proto`
+	`github.com/dappledger/AnnChain/bcstore/types`
 	"github.com/dappledger/AnnChain/eth/log"
 	"github.com/dappledger/AnnChain/eth/metrics"
-	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/syndtr/goleveldb/leveldb/errors"
-	"github.com/syndtr/goleveldb/leveldb/filter"
-	"github.com/syndtr/goleveldb/leveldb/iterator"
-	"github.com/syndtr/goleveldb/leveldb/opt"
-	"github.com/syndtr/goleveldb/leveldb/util"
+	kvclient "github.com/dappledger/AnnChain/bcstore/client"
 )
 
 const (
@@ -57,8 +55,8 @@ func NewKVResult(k, v []byte) *KVResult {
 }
 
 type LDBDatabase struct {
-	fn string      // filename for reporting
-	db *leveldb.DB // LevelDB instance
+	fn string          // filename for reporting
+	db kvclient.DBStore
 
 	compTimeMeter    metrics.Meter // Meter for measuring the total time spent in database compaction
 	compReadMeter    metrics.Meter // Meter for measuring the data read during compaction
@@ -87,23 +85,14 @@ func NewLDBDatabase(file string, cache int, handles int) (*LDBDatabase, error) {
 	}
 	logger.Info("Allocated cache and file handles", "cache", cache, "handles", handles)
 
-	// Open the db and recover any potential corruptions
-	db, err := leveldb.OpenFile(file, &opt.Options{
-		OpenFilesCacheCapacity: handles,
-		BlockCacheCapacity:     cache / 2 * opt.MiB,
-		WriteBuffer:            cache / 4 * opt.MiB, // Two of these are used internally
-		Filter:                 filter.NewBloomFilter(10),
-	})
-	if _, corrupted := err.(*errors.ErrCorrupted); corrupted {
-		db, err = leveldb.RecoverFile(file, nil)
-	}
-	// (Re)check for errors and abort if opening of the db failed
+	fullpath, err := filepath.Abs(file)
 	if err != nil {
 		return nil, err
 	}
+	cli, err := kvclient.NewLocalClient(fullpath, types.ST_GOLevelDB)
 	return &LDBDatabase{
 		fn:  file,
-		db:  db,
+		db:  cli,
 		log: logger,
 	}, nil
 }
@@ -115,87 +104,72 @@ func (db *LDBDatabase) Path() string {
 
 // Put puts the given key / value to the queue
 func (db *LDBDatabase) Put(key []byte, value []byte) error {
-	return db.db.Put(key, value, nil)
+	return db.db.Set(types.KeyValue{key,value})
 }
 
 func (db *LDBDatabase) Has(key []byte) (bool, error) {
-	return db.db.Has(key, nil)
+	return db.db.Has(key)
 }
 
 func (db *LDBDatabase) GetWithPrefix(prefix, lastKey []byte, limit uint32, cutLen int) ([]*KVResult, error) {
-	var (
-		count   uint32
-		results []*KVResult
-	)
-
-	iter := db.db.NewIterator(util.BytesPrefix(prefix), nil)
-	defer iter.Release()
-
-	if len(lastKey) != 0 {
-		iter.Seek([]byte(lastKey))
-		if 0 != bytes.Compare(iter.Key(), lastKey) {
-			return results, errors.ErrNotFound
-		}
+	kvs, err := db.db.GetByPrefix(prefix, lastKey, int64(limit))
+	if err != nil {
+		return nil, err
 	}
-
-	for iter.Next() {
-		results = append(results, NewKVResult(iter.Key()[cutLen:], iter.Value()))
-		count++
-		if count >= limit {
-			break
-		}
+	var results []*KVResult
+	for i := 0; i < len(kvs); i++ {
+		results = append(results, NewKVResult(kvs[i].Key[cutLen:], kvs[i].Value))
 	}
-
-	return results, iter.Error()
+	return results, err
 }
 
 // Get returns the given key if it's present.
 func (db *LDBDatabase) Get(key []byte) ([]byte, error) {
-	dat, err := db.db.Get(key, nil)
+	v,err:= db.db.Get(key)
 	if err != nil {
-		return nil, err
+		return nil,err
 	}
-	return dat, nil
+	return v.Value,nil
 }
 
 // Delete deletes the key from the queue and database
 func (db *LDBDatabase) Delete(key []byte) error {
-	return db.db.Delete(key, nil)
+	return db.db.Delete(key)
 }
 
-func (db *LDBDatabase) NewIterator() iterator.Iterator {
-	return db.db.NewIterator(nil, nil)
-}
+//func (db *LDBDatabase) NewIterator() iterator.Iterator {
+//	return db.db.NewIterator(nil, nil)
+//}
 
 // NewIteratorWithPrefix returns a iterator to iterate over subset of database content with a particular prefix.
-func (db *LDBDatabase) NewIteratorWithPrefix(prefix []byte) iterator.Iterator {
-	return db.db.NewIterator(util.BytesPrefix(prefix), nil)
-}
+//func (db *LDBDatabase) NewIteratorWithPrefix(prefix []byte) iterator.Iterator {
+//	return db.db.NewIterator(util.BytesPrefix(prefix), nil)
+//}
 
 func (db *LDBDatabase) Close() {
 	// Stop the metrics collection to avoid internal database races
-	db.quitLock.Lock()
-	defer db.quitLock.Unlock()
-
-	if db.quitChan != nil {
-		errc := make(chan error)
-		db.quitChan <- errc
-		if err := <-errc; err != nil {
-			db.log.Error("Metrics collection failed", "err", err)
-		}
-		db.quitChan = nil
-	}
-	err := db.db.Close()
-	if err == nil {
-		db.log.Info("Database closed")
-	} else {
-		db.log.Error("Failed to close database", "err", err)
-	}
+	//db.quitLock.Lock()
+	//defer db.quitLock.Unlock()
+	//
+	//if db.quitChan != nil {
+	//	errc := make(chan error)
+	//	db.quitChan <- errc
+	//	if err := <-errc; err != nil {
+	//		db.log.Error("Metrics collection failed", "err", err)
+	//	}
+	//	db.quitChan = nil
+	//}
+	//err := db.db.Close()
+	//if err == nil {
+	//	db.log.Info("Database closed")
+	//} else {
+	//	db.log.Error("Failed to close database", "err", err)
+	//}
 }
 
-func (db *LDBDatabase) LDB() *leveldb.DB {
-	return db.db
-}
+//func (db *LDBDatabase) LDB() *leveldb.DB {
+//	return db.db
+//}
 
 // Meter configures the database metrics collectors and
 func (db *LDBDatabase) Meter(prefix string) {
@@ -256,7 +230,7 @@ func (db *LDBDatabase) meter(refresh time.Duration) {
 	// Iterate ad infinitum and collect the stats
 	for i := 1; errc == nil && merr == nil; i++ {
 		// Retrieve the database stats
-		stats, err := db.db.GetProperty("leveldb.stats")
+		stats, err := db.db.GetProperty(proto.PropertyType_stats)
 		if err != nil {
 			db.log.Error("Failed to read database stats", "err", err)
 			merr = err
@@ -305,7 +279,7 @@ func (db *LDBDatabase) meter(refresh time.Duration) {
 		}
 
 		// Retrieve the write delay statistic
-		writedelay, err := db.db.GetProperty("leveldb.writedelay")
+		writedelay, err := db.db.GetProperty(proto.PropertyType_writedelay)
 		if err != nil {
 			db.log.Error("Failed to read database write delay statistic", "err", err)
 			merr = err
@@ -344,7 +318,7 @@ func (db *LDBDatabase) meter(refresh time.Duration) {
 		delaystats[0], delaystats[1] = delayN, duration.Nanoseconds()
 
 		// Retrieve the database iostats.
-		ioStats, err := db.db.GetProperty("leveldb.iostats")
+		ioStats, err := db.db.GetProperty(proto.PropertyType_writedelay)
 		if err != nil {
 			db.log.Error("Failed to read database iostats", "err", err)
 			merr = err
@@ -391,29 +365,31 @@ func (db *LDBDatabase) meter(refresh time.Duration) {
 }
 
 func (db *LDBDatabase) NewBatch() Batch {
-	return &ldbBatch{db: db.db, b: new(leveldb.Batch)}
+	return &ldbBatch{db: db.db}
 }
 
 type ldbBatch struct {
-	db   *leveldb.DB
-	b    *leveldb.Batch
+	//db   *leveldb.DB
+	//b    *leveldb.Batch
+	db   kvclient.DBStore
+	sets []types.KeyValue
+	dels []types.Key
 	size int
 }
 
 func (b *ldbBatch) Put(key, value []byte) error {
-	b.b.Put(key, value)
-	b.size += len(value)
+	b.sets = append(b.sets,types.KeyValue{key, value})
 	return nil
 }
 
 func (b *ldbBatch) Delete(key []byte) error {
-	b.b.Delete(key)
-	b.size += 1
+	b.dels = append(b.dels, key)
+	b.size++
 	return nil
 }
 
 func (b *ldbBatch) Write() error {
-	return b.db.Write(b.b, nil)
+	return b.db.Batch(b.dels,b.sets)
 }
 
 func (b *ldbBatch) ValueSize() int {
@@ -421,6 +397,7 @@ func (b *ldbBatch) ValueSize() int {
 }
 
 func (b *ldbBatch) Reset() {
-	b.b.Reset()
+	b.sets = b.sets[0:]
+	b.dels = b.dels[0:]
 	b.size = 0
 }

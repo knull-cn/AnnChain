@@ -19,11 +19,10 @@ package store
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"github.com/jmhodges/levigo"
 
-	"github.com/dappledger/AnnChain/kvstore"
+	"github.com/dappledger/AnnChain/bcstore/types"
 )
 
 type CLevelDB struct {
@@ -33,13 +32,12 @@ type CLevelDB struct {
 	woSync *levigo.WriteOptions
 }
 
-func NewCLevelDB(name string, dir string) (*CLevelDB, error) {
-	dbPath := path.Join(dir, name+".db")
+func NewCLevelDB(dbpath string) (*CLevelDB, error) {
 
 	opts := levigo.NewOptions()
 	opts.SetCache(levigo.NewLRUCache(1 << 30))
 	opts.SetCreateIfMissing(true)
-	db, err := levigo.Open(dbPath, opts)
+	db, err := levigo.Open(dbpath, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -56,24 +54,56 @@ func NewCLevelDB(name string, dir string) (*CLevelDB, error) {
 	return database, nil
 }
 
-func (db *CLevelDB) Get(ctx context.Context, key kvstore.KVKey) (kvstore.KVValue, error) {
+func ctxIsDone(ctx context.Context) bool {
+	select {
+	default:
+	case <-ctx.Done():
+		return true
+	}
+	return false
+}
+
+func (db *CLevelDB) Get(ctx context.Context, key types.Key) (types.Value, error) {
+	if ctxIsDone(ctx){
+		return nil,ctx.Err()
+	}
 	return db.db.Get(db.ro, key)
 }
 
-func (db *CLevelDB) Set(ctx context.Context, kv kvstore.KVKeyValue) error {
+func (db *CLevelDB) Set(ctx context.Context, kv types.KeyValue) error {
+	if ctxIsDone(ctx){
+		return ctx.Err()
+	}
 	return db.db.Put(db.wo, kv.Key, kv.Value)
 }
 
-func (db *CLevelDB) SetSync(ctx context.Context, kv kvstore.KVKeyValue) error {
+func (db *CLevelDB) SetSync(ctx context.Context, kv types.KeyValue) error {
+	if ctxIsDone(ctx){
+		return ctx.Err()
+	}
 	return db.db.Put(db.woSync, kv.Key, kv.Value)
 }
 
-func (db *CLevelDB) Delete(ctx context.Context, key kvstore.KVKey) error {
+func (db *CLevelDB) Delete(ctx context.Context, key types.Key) error {
+	if ctxIsDone(ctx){
+		return ctx.Err()
+	}
 	return db.db.Delete(db.wo, key)
 }
 
-func (db *CLevelDB) DeleteSync(ctx context.Context, key kvstore.KVKey) error {
+func (db *CLevelDB) DeleteSync(ctx context.Context, key types.Key) error {
+	if ctxIsDone(ctx){
+		return ctx.Err()
+	}
 	return db.db.Delete(db.woSync, key)
+}
+
+func (db *CLevelDB) IsExist(ctx context.Context, key types.Key) (bool, error) {
+	if ctxIsDone(ctx){
+		return false,ctx.Err()
+	}
+	v, err := db.db.Get(db.ro, key)
+	return (v != nil), err
 }
 
 func (db *CLevelDB) DB() *levigo.DB {
@@ -103,21 +133,21 @@ func (db *CLevelDB) NewBatch() Batch {
 	return &cLevelDBBatch{db, batch}
 }
 
-func (db *CLevelDB) Iterator(beg, end kvstore.KVKey) (Iterator, error) {
+func (db *CLevelDB) Iterator(prefix types.Key) (Iterator, error) {
 	itr := db.db.NewIterator(db.ro)
-	itr.Seek(beg)
+	itr.Seek(prefix)
 	return &cLevelIter{
-		beg, end,
+		prefix,
 		itr,
 	}, nil
 }
 
 type cLevelIter struct {
-	start, end kvstore.KVKey
-	ii         *levigo.Iterator
+	prefix types.Key
+	ii     *levigo.Iterator
 }
 
-func (ic *cLevelIter) Next(context.Context) bool {
+func (ic *cLevelIter) Next( context.Context) bool {
 	ic.ii.Next()
 	return ic.ii.GetError() == nil
 }
@@ -126,11 +156,16 @@ func (ic *cLevelIter) Prev(context.Context) bool {
 	ic.ii.Prev()
 	return ic.ii.GetError() == nil
 }
-func (ic *cLevelIter) Key(context.Context) kvstore.KVKey {
+func (ic *cLevelIter) Key(context.Context) types.Key {
 	return ic.ii.Key()
 }
-func (ic *cLevelIter) Value(context.Context) kvstore.KVValue {
+func (ic *cLevelIter) Value(context.Context) types.Value {
 	return ic.ii.Value()
+}
+
+func (ic *cLevelIter) Seek(_ context.Context, key types.Key) bool {
+	ic.ii.Seek(key)
+	return ic.Error() == nil
 }
 
 func (ic *cLevelIter) Error() error {
@@ -144,14 +179,14 @@ type cLevelDBBatch struct {
 	batch *levigo.WriteBatch
 }
 
-func (mBatch *cLevelDBBatch) Set(ctx context.Context, kv kvstore.KVKeyValue) {
+func (mBatch *cLevelDBBatch) Set(_ context.Context, kv types.KeyValue) {
 	mBatch.batch.Put(kv.Key, kv.Value)
 }
 
-func (mBatch *cLevelDBBatch) Delete(ctx context.Context, key kvstore.KVKey) {
+func (mBatch *cLevelDBBatch) Delete(_ context.Context, key types.Key) {
 	mBatch.batch.Delete(key)
 }
 
-func (mBatch *cLevelDBBatch) Write(ctx context.Context) error {
+func (mBatch *cLevelDBBatch) Write(_ context.Context) error {
 	return mBatch.db.db.Write(mBatch.db.wo, mBatch.batch)
 }

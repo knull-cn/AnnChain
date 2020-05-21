@@ -56,9 +56,10 @@ type BaseApplication struct {
 
 // InitBaseApplication must be the first thing to be called when an application embeds BaseApplication
 func (ba *BaseApplication) InitBaseApplication(name string, datadir string) (err error) {
-	if ba.Database, err = db.NewGoLevelDB(name, datadir); err != nil {
-		return err
-	}
+	//if ba.Database, err = db.NewGoLevelDB(name, datadir); err != nil {
+	//	return err
+	//}
+	ba.Database = db.NewDB(name,db.LevelDBBackendStr,datadir)
 	ba.InitializedState = true
 	return nil
 }

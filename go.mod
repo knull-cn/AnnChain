@@ -11,8 +11,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/ethereum/go-ethereum v1.8.27
 	github.com/go-stack/stack v1.8.0
-	github.com/golang/protobuf v1.3.1 // indirect
-	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
+	github.com/golang/protobuf v1.3.3
 	github.com/gorilla/websocket v0.0.0-20170718202341-a69d9f6de432
 	github.com/hashicorp/golang-lru v0.5.0
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -37,7 +36,7 @@ require (
 	github.com/spf13/pflag v1.0.1 // indirect
 	github.com/spf13/viper v0.0.0-20171207042631-1a0c4a370c3e
 	github.com/stretchr/testify v1.3.0
-	github.com/syndtr/goleveldb v0.0.0-20170725064836-b89cc31ef797
+	github.com/syndtr/goleveldb v1.0.0
 	go.uber.org/atomic v0.0.0-20170719224650-70bd1261d36b // indirect
 	go.uber.org/multierr v1.1.0 // indirect
 	go.uber.org/zap v0.0.0-20170802171341-e68420e36ce8
@@ -45,7 +44,8 @@ require (
 	golang.org/x/net v0.0.0-20190501004415-9ce7a6920f09 // indirect
 	golang.org/x/sys v0.0.0-20190602015325-4c4f7f33c9ed
 	golang.org/x/text v0.3.1-0.20181227161524-e6919f6577db // indirect
-	golang.org/x/tools v0.0.0-20190517183331-d88f79806bbd
+	golang.org/x/tools v0.0.0-20190524140312-2c0ae7006135
+	google.golang.org/grpc v1.29.1
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0-20170531160350-a96e63847dc3
 	gopkg.in/urfave/cli.v1 v1.20.0

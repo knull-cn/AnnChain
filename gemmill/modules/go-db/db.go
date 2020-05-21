@@ -15,6 +15,10 @@
 package db
 
 import (
+	"path"
+
+	kvclient "github.com/dappledger/AnnChain/bcstore/client"
+	"github.com/dappledger/AnnChain/bcstore/types"
 	gcmn "github.com/dappledger/AnnChain/gemmill/modules/go-common"
 )
 
@@ -66,9 +70,85 @@ func registerDBCreator(backend string, creator dbCreator, force bool) {
 }
 
 func NewDB(name string, backend string, dir string) DB {
-	db, err := backends[backend](name, dir)
+	dbpath := path.Join(dir, name+".db")
+	var ds kvclient.DBStore
+	var err error
+	switch backend {
+	case LevelDBBackendStr, GoLevelDBBackendStr:
+		ds, err = kvclient.NewLocalClient(dbpath, types.ST_GOLevelDB)
+	case CLevelDBBackendStr:
+		ds, err = kvclient.NewLocalClient(dbpath, types.ST_CLevelDB)
+	case MemDBBackendStr:
+		ds, err = kvclient.NewLocalClient(dbpath, types.ST_MemDB)
+	default:
+		err = types.SErrNotSupport
+	}
 	if err != nil {
 		gcmn.PanicSanity(gcmn.Fmt("Error initializing DB: %v", err))
 	}
-	return db
+	return &KVClient{ds}
+}
+
+type KVClient struct {
+	ds kvclient.DBStore
+}
+
+func (kvc *KVClient) Set(k, v []byte) {
+	err := kvc.ds.Set(types.KeyValue{k, v})
+	if err != nil {
+		gcmn.PanicCrisis(err)
+	}
+}
+func (kvc *KVClient) SetSync(k []byte, v []byte) {
+	kvc.Set(k, v)
+}
+func (kvc *KVClient) Delete(key []byte) {
+	err := kvc.ds.Delete(key)
+	if err != nil {
+		gcmn.PanicCrisis(err)
+	}
+}
+func (kvc *KVClient) DeleteSync(key []byte) {
+	err := kvc.ds.Delete(key)
+	if err != nil {
+		gcmn.PanicCrisis(err)
+	}
+}
+func (kvc *KVClient) Close() {
+
+}
+func (kvc *KVClient) NewBatch() Batch {
+	return &KVBatch{
+		kvc: kvc,
+	}
+}
+func (kvc *KVClient) Print() {
+
+}
+func (kvc *KVClient) Iterator() Iterator {
+	return nil
+}
+
+func (kvc *KVClient) Get(key []byte) []byte {
+	kv, err := kvc.ds.Get(key)
+	if err != nil {
+		gcmn.PanicCrisis(err)
+	}
+	return kv.Value
+}
+
+type KVBatch struct {
+	kvc     *KVClient
+	setkvs  []types.KeyValue
+	delkeys []types.Key
+}
+
+func (kvb *KVBatch) Set(key, value []byte) {
+	kvb.setkvs = append(kvb.setkvs, types.KeyValue{key, value})
+}
+func (kvb *KVBatch) Delete(key []byte) {
+	kvb.delkeys = append(kvb.delkeys, key)
+}
+func (kvb *KVBatch) Write() {
+	kvb.kvc.ds.Batch(kvb.delkeys, kvb.setkvs)
 }

@@ -17,7 +17,6 @@ package store
 import (
 	"context"
 	"fmt"
-	"path"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
@@ -25,15 +24,14 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"
 
-	"github.com/dappledger/AnnChain/kvstore"
+	"github.com/dappledger/AnnChain/bcstore/types"
 )
 
 type GoLevelDB struct {
 	db *leveldb.DB
 }
 
-func NewGoLevelDB(name string, dir string) (*GoLevelDB, error) {
-	dbPath := path.Join(dir, name+".db")
+func NewGoLevelDB(dbPath string) (*GoLevelDB, error) {
 	db, err := leveldb.OpenFile(dbPath, nil)
 	if err != nil {
 		return nil, err
@@ -42,7 +40,7 @@ func NewGoLevelDB(name string, dir string) (*GoLevelDB, error) {
 	return database, nil
 }
 
-func (db *GoLevelDB) Get(ctx context.Context, key kvstore.KVKey) (kvstore.KVValue, error) {
+func (db *GoLevelDB) Get(ctx context.Context, key types.Key) (types.Value, error) {
 	res, err := db.db.Get(key, nil)
 	if err != nil {
 		if err != errors.ErrNotFound {
@@ -52,25 +50,34 @@ func (db *GoLevelDB) Get(ctx context.Context, key kvstore.KVKey) (kvstore.KVValu
 	return res, nil
 }
 
-func (db *GoLevelDB) Set(ctx context.Context, kv kvstore.KVKeyValue) error {
+func (db *GoLevelDB) Set(ctx context.Context, kv types.KeyValue) error {
 	return db.db.Put(kv.Key, kv.Value, nil)
 }
 
-func (db *GoLevelDB) SetSync(kv kvstore.KVKeyValue) error {
+func (db *GoLevelDB) SetSync(kv types.KeyValue) error {
 	return db.db.Put(kv.Key, kv.Value, &opt.WriteOptions{Sync: true})
 }
 
-func (db *GoLevelDB) Delete(ctx context.Context, key kvstore.KVKey) error {
+func (db *GoLevelDB) Delete(ctx context.Context, key types.Key) error {
 	return db.db.Delete(key, nil)
 }
 
-func (db *GoLevelDB) DeleteSync(ctx context.Context, key kvstore.KVKey) error {
+func (db *GoLevelDB) DeleteSync(ctx context.Context, key types.Key) error {
 	return db.db.Delete(key, &opt.WriteOptions{Sync: true})
 }
 
 func (db *GoLevelDB) Close() error {
 	return db.db.Close()
 }
+
+func (db *GoLevelDB)GetProperty(name string)(string,error){
+	return db.db.GetProperty(name)
+}
+
+func (db *GoLevelDB) IsExist(ctx context.Context, key types.Key) (bool, error) {
+	return db.db.Has(key,nil)
+}
+
 
 func (db *GoLevelDB) Print() {
 	iter := db.db.NewIterator(nil, nil)
@@ -81,11 +88,10 @@ func (db *GoLevelDB) Print() {
 	}
 }
 
-func (db *GoLevelDB) Iterator(beg, end kvstore.KVKey) (Iterator, error) {
-	ii := db.db.NewIterator(&util.Range{beg, end}, nil)
+func (db *GoLevelDB) Iterator(prefix types.Key) (Iterator, error) {
+	ii := db.db.NewIterator(util.BytesPrefix(prefix), nil)
 	return &goLevelIterator{
-		beg,
-		end,
+		prefix,
 		ii,
 	}, nil
 }
@@ -99,7 +105,7 @@ func (db *GoLevelDB) NewBatch() Batch {
 }
 
 type goLevelIterator struct {
-	start, end kvstore.KVKey
+	prefix types.Key
 	ii         lvlitr.Iterator
 }
 
@@ -110,11 +116,15 @@ func (ic *goLevelIterator) Next(context.Context) bool {
 func (ic *goLevelIterator) Prev(context.Context) bool {
 	return ic.ii.Prev()
 }
-func (ic *goLevelIterator) Key(context.Context) kvstore.KVKey {
+func (ic *goLevelIterator) Key(context.Context) types.Key {
 	return ic.ii.Key()
 }
-func (ic *goLevelIterator) Value(context.Context) kvstore.KVValue {
+func (ic *goLevelIterator) Value(context.Context) types.Value {
 	return ic.ii.Value()
+}
+
+func (ic *goLevelIterator)Seek(ctx context.Context,key types.Key)bool{
+	return ic.ii.Seek(key)
 }
 
 func (ic *goLevelIterator) Error() error {
@@ -128,11 +138,11 @@ type goLevelDBBatch struct {
 	batch *leveldb.Batch
 }
 
-func (mBatch *goLevelDBBatch) Set(ctx context.Context, kv kvstore.KVKeyValue) {
+func (mBatch *goLevelDBBatch) Set(ctx context.Context, kv types.KeyValue) {
 	mBatch.batch.Put(kv.Key, kv.Value)
 }
 
-func (mBatch *goLevelDBBatch) Delete(ctx context.Context, key kvstore.KVKey) {
+func (mBatch *goLevelDBBatch) Delete(ctx context.Context, key types.Key) {
 	mBatch.batch.Delete(key)
 }
 
