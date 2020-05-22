@@ -8,6 +8,7 @@ import (
 
     `github.com/dappledger/AnnChain/bcstore/proto`
     `github.com/dappledger/AnnChain/bcstore/types`
+    log "github.com/sirupsen/logrus"
 )
 
 type RpcCLient struct {
@@ -16,7 +17,8 @@ type RpcCLient struct {
 }
 
 func newRpcCLient(dbname string,addrs []string)(DBStore,error){
-    cc,err:=grpc.Dial(addrs[0])
+    log.Infof("newRpcClient(%s;%v)",dbname,addrs)
+    cc,err:=grpc.Dial(addrs[0],grpc.WithInsecure())
     if err != nil {
         return nil,err
     }
@@ -107,6 +109,7 @@ func (rc *RpcCLient)Batch(dels []types.Key,sets []types.KeyValue)error{
         in.Dels[i] = dels[i]
     }
     for i:=0;i<len(sets);i++{
+        in.Sets[i] = &proto.KeyValue{}
         in.Sets[i].Key = sets[i].Key
         in.Sets[i].Value = sets[i].Value
     }

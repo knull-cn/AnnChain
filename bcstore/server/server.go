@@ -73,7 +73,9 @@ func (ls *server) GetByPrefix(ctx context.Context, prefix, lastKey types.Key, li
 	if err != nil {
 		return nil, err
 	}
-	itr.Seek(ctx, lastKey)
+	if len(lastKey) > 0{
+		itr.Seek(ctx, lastKey)
+	}
 	itr.Next(ctx)
 	var kvs []types.KeyValue
 	for itr.Next(ctx) {

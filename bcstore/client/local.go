@@ -2,14 +2,29 @@ package client
 
 import (
 	"context"
-	`path`
+	"path"
 
-	`github.com/spf13/viper`
+	"github.com/spf13/cobra"
 
 	"github.com/dappledger/AnnChain/bcstore/proto"
 	"github.com/dappledger/AnnChain/bcstore/server"
 	"github.com/dappledger/AnnChain/bcstore/types"
 )
+
+const (
+	FlagUseRPC  = "use_rpc"
+	FlagRPCAddr = "store_rpc"
+)
+
+var (
+	flagUseRPC bool
+	flagRPCAddr string
+)
+
+func FlagsSet(rootCmd *cobra.Command){
+	rootCmd.PersistentFlags().BoolVar(&flagUseRPC, FlagUseRPC, false, "enable rpc flag.default is false(use local store)")
+	rootCmd.PersistentFlags().StringVar(&flagRPCAddr, FlagRPCAddr, "127.0.0.1:9876", "address of store rpc")
+}
 
 type DBStore interface {
 	Set(key types.KeyValue) error
@@ -25,16 +40,16 @@ type LocalClient struct {
 	srv server.Server
 }
 
-func NewClient(name ,dir string, dbtype types.StoreType)(DBStore,error){
-	if !viper.GetBool("use_rpc"){
-		return newLocalClient(name,dir,dbtype)
+func NewClient(name, dir string, dbtype types.StoreType) (DBStore, error) {
+	if !flagUseRPC {
+		return newLocalClient(name, dir, dbtype)
 	}
-	addr:=viper.GetString("rpc_addr")
-	return newRpcCLient(name,[]string{addr})
+	addr := flagRPCAddr
+	return newRpcCLient(name, []string{addr})
 }
 
-func newLocalClient(name ,dir string, dbtype types.StoreType) (ds DBStore, err error) {
-	fullpath := path.Join(dir,name)
+func newLocalClient(name, dir string, dbtype types.StoreType) (ds DBStore, err error) {
+	fullpath := path.Join(dir, name)
 	var lc LocalClient
 	lc.srv, err = server.NewServer(fullpath, dbtype)
 	if err != nil {

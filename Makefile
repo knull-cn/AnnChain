@@ -14,6 +14,10 @@ genesis:
 gtool:
 	go build -ldflags "-X $(ver) -X $(tag)" -o ./build/gtool ./cmd/client
 
+kvstore:
+	go build -o ./build/kvstore ./bcstore/cmd/server/
+kvcli:
+	go build -o ./build/kvcli ./bcstore/cmd/client/
 clean:
 	rm -rf build
 

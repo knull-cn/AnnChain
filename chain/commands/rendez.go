@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 
+	bcclient `github.com/dappledger/AnnChain/bcstore/client`
 	"github.com/dappledger/AnnChain/chain/commands/global"
 	"github.com/spf13/cobra"
 )
@@ -36,6 +37,7 @@ var (
 
 func init() {
 	globalFlags := global.GFlags()
+	bcclient.FlagsSet(rootCmd)
 	rootCmd.PersistentFlags().BoolVar(&globalFlags.Debug, "debug", false, "enable client-side debug logging")
 	rootCmd.PersistentFlags().StringVar(&globalFlags.RuntimeDir, "runtime", global.DefaultRuntimeDir, "runtime dir")
 	rootCmd.PersistentFlags().StringVar(&globalFlags.LogDir, "log_path", "", "log path, default: ./output.log")
