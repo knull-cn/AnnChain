@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//--- +build gcc
-
 package store
 
 import (
@@ -33,7 +31,6 @@ type CLevelDB struct {
 }
 
 func NewCLevelDB(dbpath string) (*CLevelDB, error) {
-
 	opts := levigo.NewOptions()
 	opts.SetCache(levigo.NewLRUCache(1 << 30))
 	opts.SetCreateIfMissing(true)
@@ -54,53 +51,44 @@ func NewCLevelDB(dbpath string) (*CLevelDB, error) {
 	return database, nil
 }
 
-func ctxIsDone(ctx context.Context) bool {
-	select {
-	default:
-	case <-ctx.Done():
-		return true
-	}
-	return false
-}
-
 func (db *CLevelDB) Get(ctx context.Context, key types.Key) (types.Value, error) {
-	if ctxIsDone(ctx){
-		return nil,ctx.Err()
+	if ctxIsDone(ctx) {
+		return nil, ctx.Err()
 	}
 	return db.db.Get(db.ro, key)
 }
 
 func (db *CLevelDB) Set(ctx context.Context, kv types.KeyValue) error {
-	if ctxIsDone(ctx){
+	if ctxIsDone(ctx) {
 		return ctx.Err()
 	}
 	return db.db.Put(db.wo, kv.Key, kv.Value)
 }
 
 func (db *CLevelDB) SetSync(ctx context.Context, kv types.KeyValue) error {
-	if ctxIsDone(ctx){
+	if ctxIsDone(ctx) {
 		return ctx.Err()
 	}
 	return db.db.Put(db.woSync, kv.Key, kv.Value)
 }
 
 func (db *CLevelDB) Delete(ctx context.Context, key types.Key) error {
-	if ctxIsDone(ctx){
+	if ctxIsDone(ctx) {
 		return ctx.Err()
 	}
 	return db.db.Delete(db.wo, key)
 }
 
 func (db *CLevelDB) DeleteSync(ctx context.Context, key types.Key) error {
-	if ctxIsDone(ctx){
+	if ctxIsDone(ctx) {
 		return ctx.Err()
 	}
 	return db.db.Delete(db.woSync, key)
 }
 
 func (db *CLevelDB) IsExist(ctx context.Context, key types.Key) (bool, error) {
-	if ctxIsDone(ctx){
-		return false,ctx.Err()
+	if ctxIsDone(ctx) {
+		return false, ctx.Err()
 	}
 	v, err := db.db.Get(db.ro, key)
 	return (v != nil), err
@@ -147,7 +135,7 @@ type cLevelIter struct {
 	ii     *levigo.Iterator
 }
 
-func (ic *cLevelIter) Next( context.Context) bool {
+func (ic *cLevelIter) Next(context.Context) bool {
 	ic.ii.Next()
 	return ic.ii.GetError() == nil
 }

@@ -64,24 +64,29 @@ func (ls *server) Delete(ctx context.Context, key types.Key) (err error) {
 	return ls.is.Delete(ctx, key)
 }
 
+func copyBytes(b []byte) []byte {
+	nb := make([]byte, len(b))
+	copy(nb, b)
+	return nb
+}
+
 //limit:
 func (ls *server) GetByPrefix(ctx context.Context, prefix, lastKey types.Key, limit int64) ([]types.KeyValue, error) {
 	if limit <= 0 {
-		limit = 20 //default 20;
+		limit = types.DefPageLimit //default 20;
 	}
 	itr, err := ls.is.Iterator(prefix)
 	if err != nil {
 		return nil, err
 	}
-	if len(lastKey) > 0{
+	if len(lastKey) > 0 {
 		itr.Seek(ctx, lastKey)
 	}
-	itr.Next(ctx)
 	var kvs []types.KeyValue
 	for itr.Next(ctx) {
 		kv := types.KeyValue{
-			Key:   itr.Key(ctx),
-			Value: itr.Value(ctx),
+			Key:   copyBytes(itr.Key(ctx)),
+			Value: copyBytes(itr.Value(ctx)),
 		}
 		kvs = append(kvs, kv)
 		limit--

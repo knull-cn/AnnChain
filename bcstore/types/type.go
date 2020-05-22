@@ -16,8 +16,8 @@ type StoreType string
 
 const (
 	ST_CLevelDB  StoreType = "cleveldb"
-	ST_GOLevelDB           = "goleveldb"
-	ST_MemDB               = "memdb"
+	ST_GOLevelDB StoreType = "goleveldb"
+	ST_MemDB     StoreType = "memdb"
 )
 
 //error of server;
@@ -27,9 +27,7 @@ var (
 	SErrStoreType  = errors.New("store type error")
 )
 
-var (
-
-)
+var ()
 
 const (
 	DefPageLimit = 20

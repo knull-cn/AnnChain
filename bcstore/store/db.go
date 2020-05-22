@@ -15,12 +15,19 @@
 package store
 
 import (
-	`context`
+	"context"
 
-	`github.com/dappledger/AnnChain/bcstore/types`
+	"github.com/dappledger/AnnChain/bcstore/types"
 )
 
-
+func ctxIsDone(ctx context.Context) bool {
+	select {
+	default:
+	case <-ctx.Done():
+		return true
+	}
+	return false
+}
 
 type IStore interface {
 	Get(context.Context, types.Key) (types.Value, error)
@@ -28,8 +35,8 @@ type IStore interface {
 	Delete(context.Context, types.Key) error
 	Close() error
 	NewBatch() Batch
-	Iterator(prefix types.Key) (Iterator,error)
-	IsExist(ctx context.Context, keys types.Key)(bool,error)
+	Iterator(prefix types.Key) (Iterator, error)
+	IsExist(ctx context.Context, keys types.Key) (bool, error)
 }
 
 type Batch interface {
@@ -43,6 +50,6 @@ type Iterator interface {
 	Prev(context.Context) bool
 	Key(context.Context) types.Key
 	Value(context.Context) types.Value
-	Seek(context.Context,types.Key)bool
+	Seek(context.Context, types.Key) bool
 	Error() error
 }
