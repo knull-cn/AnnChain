@@ -1,0 +1,5 @@
+FROM annchain/runner:alpine3.11
+RUN apk add leveldb
+WORKDIR /genesis
+COPY build/genesis /bin/
+ENTRYPOINT ["genesis"]

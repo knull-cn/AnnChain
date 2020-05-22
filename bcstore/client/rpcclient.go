@@ -113,6 +113,9 @@ func (rc *RpcCLient) Batch(dels []types.Key, sets []types.KeyValue) error {
 		in.Sets[i].Key = sets[i].Key
 		in.Sets[i].Value = sets[i].Value
 	}
+	if len(dels) + len(sets)==0{
+		return nil
+	}
 	resp, err := rc.cli.Batch(context.TODO(), in)
 	if err != nil {
 		return err

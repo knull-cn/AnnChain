@@ -18,11 +18,16 @@ var (
 	portstr = flag.String("port", "9876", "listener of this service")
 	runtime = flag.String("runtime","","database dir for runtime")
 	dbtype = flag.Int64("dbtype",0,"database type(default is 0).\n\t0: CLevelDB;\n\t1: GOLevelDB;\n\t2: MemDB.\n")
+	isDebug = flag.Bool("debug",false,"is debug model.true is debug")
 )
 
 func loginit(){
 	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.TraceLevel)
+	lvl := logrus.InfoLevel
+	if *isDebug{
+		lvl = logrus.TraceLevel
+	}
+	logrus.SetLevel(lvl)
 }
 
 func main() {

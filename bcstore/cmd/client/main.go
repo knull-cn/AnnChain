@@ -33,11 +33,20 @@ func main() {
 	rootCmd.PersistentFlags().Set(bcclient.FlagUseRPC, "true")
 	logrus.SetLevel(logrus.TraceLevel)
 	logrus.SetOutput(os.Stdout)
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println("execute error: ", err)
+		os.Exit(-1)
+	}
+
+
 	dbstore, err := bcclient.NewClient(dbname, dbdir, dbtype)
 	if err != nil {
 		fmt.Printf("NewClient(%s) error:%s", dbname, err.Error())
 		return
 	}
+
+
 	var cmd string
 	var key string
 	var value string

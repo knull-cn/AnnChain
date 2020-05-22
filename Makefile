@@ -73,3 +73,14 @@ fastrun:image
 clean_fastrun:
 	docker-compose -f docker-compose.yaml stop
 	docker-compose -f docker-compose.yaml rm
+
+# kvstore seperate from annchain
+build-local:genesis kvstore kvcli
+
+image-nobuild:build-local
+	docker build -t genesis:latest -f bcstore/dockers/DockerGenesis .
+	docker build -t kvstore:latest -f bcstore/dockers/DockerKV .
+buildrun:image-nobuild
+	docker-compose -f docker-compose.yaml up
+run:
+	docker-compose -f docker-compose.yaml up

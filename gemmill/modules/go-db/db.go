@@ -68,6 +68,14 @@ func registerDBCreator(backend string, creator dbCreator, force bool) {
 }
 
 func NewDB(name string, backend string, dir string) DB {
+	ds ,err := NewDBErr(name,backend,dir)
+	if err != nil {
+		gcmn.PanicSanity(gcmn.Fmt("Error initializing DB: %v", err))
+	}
+	return ds
+}
+
+func NewDBErr(name string, backend string, dir string) (DB,error) {
 	var ds kvclient.DBStore
 	var err error
 	switch backend {
@@ -80,10 +88,7 @@ func NewDB(name string, backend string, dir string) DB {
 	default:
 		err = types.SErrNotSupport
 	}
-	if err != nil {
-		gcmn.PanicSanity(gcmn.Fmt("Error initializing DB: %v", err))
-	}
-	return &KVClient{ds}
+	return &KVClient{ds},err
 }
 
 type KVClient struct {

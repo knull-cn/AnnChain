@@ -1,8 +1,62 @@
 version: '3'
 services:
+#rpcstores;
+  rpcstore-0:
+    hostname: rpcstore-0
+    image: kvstore:latest
+    ports:
+      - '9000:9000'
+    entrypoint:
+      - /bin/sh
+      - -c
+      - /bin/kvstore --runtime data --port "9000" #--debug
+    networks:
+      app_net:
+        ipv4_address: 192.168.10.20
+    restart: always
+  rpcstore-1:
+    hostname: rpcstore-1
+    image: kvstore:latest
+    ports:
+      - '9001:9001'
+    entrypoint:
+      - /bin/sh
+      - -c
+      - /bin/kvstore --runtime data --port "9001" #--debug
+    networks:
+      app_net:
+        ipv4_address: 192.168.10.21
+    restart: always
+  rpcstore-2:
+    hostname: rpcstore-2
+    image: kvstore:latest
+    ports:
+      - '9002:9002'
+    entrypoint:
+      - /bin/sh
+      - -c
+      - /bin/kvstore --runtime data --port "9002" #--debug
+    networks:
+      app_net:
+        ipv4_address: 192.168.10.22
+    restart: always
+  rpcstore-3:
+    hostname: rpcstore-3
+    image: kvstore:latest
+    ports:
+      - '9003:9003'
+    entrypoint:
+      - /bin/sh
+      - -c
+      - /bin/kvstore --runtime data --port "9003" #--debug
+    networks:
+      app_net:
+        ipv4_address: 192.168.10.23
+    restart: always
+# validators;
   validator-0:
     hostname: validator-0
-    image: annchain/genesis:latest
+    image: genesis:latest
     ports:
       - '46000:46000'
       - '47000:47000'
@@ -33,14 +87,14 @@ services:
               tracerouter_msg_ttl = 5
               network_rate_limit = 1024' > /genesis/config.toml
         echo '{"address":"6E57A5F704E94151714650DCFC52D220595D912B","pub_key":[1,"1C93767F98D451F9A5464938ABDEECBEF9BE4606190D446D9057EC3E90009AD8"],"last_height":0,"last_round":0,"last_step":0,"last_signature":null,"last_signbytes":"","priv_key":[1,"C8A5E8E93D58D4AD26DDB6BA9D14BA1941E3AE26E39E9B71F70855C9E391A0E01C93767F98D451F9A5464938ABDEECBEF9BE4606190D446D9057EC3E90009AD8"]}' > /genesis/priv_validator.json
-        genesis run --runtime="/genesis"
+        genesis run --runtime="/genesis" --use_rpc --store_rpc="192.168.10.20:9000"
     networks:
       app_net:
         ipv4_address: 192.168.10.10
     restart: always
   validator-1:
     hostname: validator-1
-    image: annchain/genesis:latest
+    image: genesis:latest
     ports:
       - '46001:46001'
       - '47001:47001'
@@ -71,14 +125,14 @@ services:
               tracerouter_msg_ttl = 5
               network_rate_limit = 1024' > /genesis/config.toml
         echo '{"address":"AE4EC0F626FFE71D013C8E8F5137B710F5DC715F","pub_key":[1,"9C5A3B4C2C99FD432B5D638696600FE4F76084A20BAE933E3A97AD8FE2663637"],"last_height":0,"last_round":0,"last_step":0,"last_signature":null,"last_signbytes":"","priv_key":[1,"D95D969B03943B9509CD624CFA600739393BB3A2A38E869E4077F949415159399C5A3B4C2C99FD432B5D638696600FE4F76084A20BAE933E3A97AD8FE2663637"]}' > /genesis/priv_validator.json
-        genesis run --runtime="/genesis"
+        genesis run --runtime="/genesis" --use_rpc --store_rpc="192.168.10.21:9001"
     networks:
       app_net:
         ipv4_address: 192.168.10.11
     restart: always
   validator-2:
     hostname: validator-2
-    image: annchain/genesis:latest
+    image: genesis:latest
     ports:
       - '46002:46002'
       - '47002:47002'
@@ -109,14 +163,14 @@ services:
               tracerouter_msg_ttl = 5
               network_rate_limit = 1024' > /genesis/config.toml
         echo '{"address":"DC884FC7E6311D49652A2ADE1906BBE8145DEB05","pub_key":[1,"0749EDC56F28D9B0943CD1C9E261CB7547A3060F36882077BA372CCD1B5A9963"],"last_height":0,"last_round":0,"last_step":0,"last_signature":null,"last_signbytes":"","priv_key":[1,"E5A3EFBAEAC9725F5ED36C13492C423F541056A53F37473C7BDEBD7BAA038D8A0749EDC56F28D9B0943CD1C9E261CB7547A3060F36882077BA372CCD1B5A9963"]}' > /genesis/priv_validator.json
-        genesis run --runtime="/genesis"
+        genesis run --runtime="/genesis" --use_rpc --store_rpc="192.168.10.22:9002"
     networks:
       app_net:
         ipv4_address: 192.168.10.12
     restart: always
   validator-3:
     hostname: validator-3
-    image: annchain/genesis:latest
+    image: genesis:latest
     ports:
       - '46003:46003'
       - '47003:47003'
@@ -147,11 +201,12 @@ services:
               tracerouter_msg_ttl = 5
               network_rate_limit = 1024' > /genesis/config.toml
         echo '{"address":"7CE2DED89377BA0C2742CF4C0CF0F3687BBC3C32","pub_key":[1,"576CF4053E3F9C1778C8276378DDA072178F0212FF1E2300E064B73DE3AB5850"],"last_height":0,"last_round":0,"last_step":0,"last_signature":null,"last_signbytes":"","priv_key":[1,"B578B7B45316454F8198BEB760C9460A4C5617417B99F587777C0FF9A54BA195576CF4053E3F9C1778C8276378DDA072178F0212FF1E2300E064B73DE3AB5850"]}' > /genesis/priv_validator.json
-        genesis run --runtime="/genesis"
+        genesis run --runtime="/genesis" --use_rpc --store_rpc="192.168.10.23:9003"
     networks:
       app_net:
         ipv4_address: 192.168.10.13
     restart: always
+# networks
 networks:
   app_net:
     driver: bridge

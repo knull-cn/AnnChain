@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	`fmt`
 	"path"
 
 	"github.com/dappledger/AnnChain/bcstore/proto"
@@ -51,8 +52,9 @@ func (ss *StoreService) GetServer(name string) (svr Server, err error) {
 		svr, err = NewServer(path.Join(ss.datadir, name), ss.dbtype)
 		if err == nil {
 			ss.servers[name] = svr
+		}else{
+			return nil,fmt.Errorf("GetServer(%s) error:%s",name,err.Error())
 		}
-		log.Tracef("GetServer(%s;%s) new err=%v.", ss.datadir, name, err)
 	}
 	return
 }
@@ -133,6 +135,10 @@ func (ss *StoreService) GetByPrefix(ctx context.Context, req *proto.ReqGetByPref
 func (ss *StoreService) Batch(ctx context.Context, req *proto.ReqBatch) (*proto.RespBase, error) {
 	log.Tracef("Batch.req= %d'dels;%d's sets.", len(req.GetDels()), len(req.GetSets()))
 	var resp proto.RespBase
+	if len(req.GetDels())+ len(req.GetSets())==0{
+		return &resp,nil
+	}
+
 	is, err := ss.GetServer(req.GetDbName())
 	if err != nil {
 		log.Errorf("ss.Batch : GetServer error:%s", err.Error())

@@ -1025,11 +1025,12 @@ func (ang *Angine) UpdateStateMachine(s *state.State) {
 	ang.stateMachine = s
 }
 
-func ensureQueryDB(dbDir string) (*dbm.GoLevelDB, error) {
+func ensureQueryDB(dbDir string) (dbm.DB, error) {
 	if err := gcmn.EnsureDir(path.Join(dbDir, "query_cache"), 0775); err != nil {
 		return nil, fmt.Errorf("fail to ensure tx_execution_result")
 	}
-	querydb, err := dbm.NewGoLevelDB("tx_execution_result", path.Join(dbDir, "query_cache"))
+	//querydb, err := dbm.NewGoLevelDB("tx_execution_result", path.Join(dbDir, "query_cache"))
+	querydb, err := dbm.NewDBErr("query_cache", dbm.GoLevelDBBackendStr, dbDir)
 	if err != nil {
 		return nil, fmt.Errorf("fail to open tx_execution_result")
 	}
