@@ -16,7 +16,7 @@ type StoreService struct {
 }
 
 func NewStoreService(datadir string, dbtype types.StoreType) *StoreService {
-	log.Tracef("NewStoreService(%s;%v)",datadir,dbtype)
+	log.Tracef("NewStoreService(%s;%v)", datadir, dbtype)
 	if datadir == "" {
 		datadir = "~/.data"
 	}
@@ -52,13 +52,13 @@ func (ss *StoreService) GetServer(name string) (svr Server, err error) {
 		if err == nil {
 			ss.servers[name] = svr
 		}
-		log.Tracef("GetServer(%s;%s) new err=%v.",ss.datadir,name,err)
+		log.Tracef("GetServer(%s;%s) new err=%v.", ss.datadir, name, err)
 	}
 	return
 }
 
 func (ss *StoreService) Get(ctx context.Context, req *proto.ReqGet) (*proto.RespGet, error) {
-	log.Tracef("Get.req=%x(%s).",req.GetKey(),string(req.GetKey()))
+	log.Tracef("Get.req=%x(%s).", req.GetKey(), string(req.GetKey()))
 	var resp = proto.RespGet{
 		Base: &proto.RespBase{},
 	}
@@ -84,7 +84,7 @@ func (ss *StoreService) Get(ctx context.Context, req *proto.ReqGet) (*proto.Resp
 }
 
 func (ss *StoreService) Set(ctx context.Context, req *proto.ReqSet) (*proto.RespBase, error) {
-	log.Tracef("Set.req=%x(%s).",req.Kv.GetKey(),string(req.Kv.GetKey()))
+	log.Tracef("Set.req=%x(%s).", req.Kv.GetKey(), string(req.Kv.GetKey()))
 	var resp proto.RespBase
 	is, err := ss.GetServer(req.GetDbName())
 	if err != nil {
@@ -104,7 +104,7 @@ func (ss *StoreService) Set(ctx context.Context, req *proto.ReqSet) (*proto.Resp
 }
 
 func (ss *StoreService) GetByPrefix(ctx context.Context, req *proto.ReqGetByPrefix) (*proto.RespGetByPrefix, error) {
-	log.Tracef("GetByPrefix.req=%x(%s).",req.GetPrefix(),string(req.GetPrefix()))
+	log.Tracef("GetByPrefix.req=%x(%s).", req.GetPrefix(), string(req.GetPrefix()))
 	var resp = proto.RespGetByPrefix{
 		Base: &proto.RespBase{},
 	}
@@ -131,7 +131,7 @@ func (ss *StoreService) GetByPrefix(ctx context.Context, req *proto.ReqGetByPref
 	return &resp, nil
 }
 func (ss *StoreService) Batch(ctx context.Context, req *proto.ReqBatch) (*proto.RespBase, error) {
-	log.Tracef("Batch.req= %d'dels;%d's sets.",len(req.GetDels()),len(req.GetSets()))
+	log.Tracef("Batch.req= %d'dels;%d's sets.", len(req.GetDels()), len(req.GetSets()))
 	var resp proto.RespBase
 	is, err := ss.GetServer(req.GetDbName())
 	if err != nil {
@@ -159,7 +159,7 @@ func (ss *StoreService) Batch(ctx context.Context, req *proto.ReqBatch) (*proto.
 	return &resp, nil
 }
 func (ss *StoreService) IsExist(ctx context.Context, req *proto.ReqIsExist) (*proto.RespIsExist, error) {
-	log.Tracef("IsExist.req=%x(%s).",req.GetKey(),string(req.GetKey()))
+	log.Tracef("IsExist.req=%x(%s).", req.GetKey(), string(req.GetKey()))
 	var resp = proto.RespIsExist{
 		Base: &proto.RespBase{},
 	}
@@ -181,7 +181,7 @@ func (ss *StoreService) IsExist(ctx context.Context, req *proto.ReqIsExist) (*pr
 	return &resp, nil
 }
 func (ss *StoreService) GetProperty(ctx context.Context, req *proto.ReqGetProperty) (*proto.RespGetProperty, error) {
-	log.Tracef("GetProperty.req=%d(%v).",req.GetProperty(),req.GetProperty())
+	log.Tracef("GetProperty.req=%d(%v).", req.GetProperty(), req.GetProperty())
 	var resp = proto.RespGetProperty{
 		Base: &proto.RespBase{},
 	}
@@ -204,7 +204,7 @@ func (ss *StoreService) GetProperty(ctx context.Context, req *proto.ReqGetProper
 }
 
 func (ss *StoreService) Delete(ctx context.Context, req *proto.ReqDelete) (*proto.RespBase, error) {
-	log.Tracef("Delete.req=%x(%s).",req.GetKey(),string(req.GetKey()))
+	log.Tracef("Delete.req=%x(%s).", req.GetKey(), string(req.GetKey()))
 	var resp proto.RespBase
 	is, err := ss.GetServer(req.GetDbName())
 	if err != nil {

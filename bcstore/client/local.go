@@ -17,11 +17,11 @@ const (
 )
 
 var (
-	flagUseRPC bool
+	flagUseRPC  bool
 	flagRPCAddr string
 )
 
-func FlagsSet(rootCmd *cobra.Command){
+func FlagsSet(rootCmd *cobra.Command) {
 	rootCmd.PersistentFlags().BoolVar(&flagUseRPC, FlagUseRPC, false, "enable rpc flag.default is false(use local store)")
 	rootCmd.PersistentFlags().StringVar(&flagRPCAddr, FlagRPCAddr, "127.0.0.1:9876", "address of store rpc")
 }

@@ -70,14 +70,13 @@ func (db *GoLevelDB) Close() error {
 	return db.db.Close()
 }
 
-func (db *GoLevelDB)GetProperty(name string)(string,error){
+func (db *GoLevelDB) GetProperty(name string) (string, error) {
 	return db.db.GetProperty(name)
 }
 
 func (db *GoLevelDB) IsExist(ctx context.Context, key types.Key) (bool, error) {
-	return db.db.Has(key,nil)
+	return db.db.Has(key, nil)
 }
-
 
 func (db *GoLevelDB) Print() {
 	iter := db.db.NewIterator(nil, nil)
@@ -106,7 +105,7 @@ func (db *GoLevelDB) NewBatch() Batch {
 
 type goLevelIterator struct {
 	prefix types.Key
-	ii         lvlitr.Iterator
+	ii     lvlitr.Iterator
 }
 
 func (ic *goLevelIterator) Next(context.Context) bool {
@@ -123,7 +122,7 @@ func (ic *goLevelIterator) Value(context.Context) types.Value {
 	return ic.ii.Value()
 }
 
-func (ic *goLevelIterator)Seek(ctx context.Context,key types.Key)bool{
+func (ic *goLevelIterator) Seek(ctx context.Context, key types.Key) bool {
 	return ic.ii.Seek(key)
 }
 
